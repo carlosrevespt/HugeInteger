@@ -171,7 +171,7 @@ public class HugeInteger
      * @param int[] The input array. Is assumed to be in big-endian order: the most significant digit is in the zeroth element.
      * @return An {@code ArgumentValidator} object containing the results of the validation.
      */ 
-    private void validateArray(int[] digitsBigEndian)
+    private final void validateArray(int[] digitsBigEndian)
     {
         boolean validationResult = true;
         String validationMessage = "";
@@ -216,7 +216,7 @@ public class HugeInteger
      *               the zeroth element if no sign is present, or in the first element if a sign is present.
      * @return An {@code ArgumentValidator} object containing the results of the validation.
      */ 
-    private void validateString(String digitsBigEndian)
+    private final void validateString(String digitsBigEndian)
     {        
         boolean validationResult = true;
         String validationMessage = "";
@@ -270,7 +270,7 @@ public class HugeInteger
      * @return An integer array which is a copy of the input array in little-endian order: 
      *         the least significant digit is in the zeroth element.
      */
-    private int[] convertToLittleEndian(int[] digitsBigEndian)
+    private final int[] convertToLittleEndian(int[] digitsBigEndian)
     {
         int[] digitsLittleEndian = new int[digitsBigEndian.length];
         
@@ -289,7 +289,7 @@ public class HugeInteger
      *              is in the zeroth element.
      * @return An integer array which is a copy of the input array without leading zeros.
      */
-    private int[] stripLeadingZerosArray(int[] digitsBigEndian) 
+    private final int[] stripLeadingZerosArray(int[] digitsBigEndian) 
     {
         int numberLength = digitsBigEndian.length;
         int firstNonZero;
@@ -329,7 +329,7 @@ public class HugeInteger
      *              is in the zeroth element.
      * @return A String which is a copy of the input string without leading zeros.
      */
-    private String stripLeadingZerosString(String digitsBigEndian) 
+    private final String stripLeadingZerosString(String digitsBigEndian) 
     {
         return digitsBigEndian.replaceAll("^0+","");
     }
