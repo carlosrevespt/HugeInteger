@@ -73,7 +73,6 @@ public class HugeInteger
      * 
      * @param String The input string. Is assumed to be in big-endian order: the most significant digit is in the zeroth element
      *               if no sign is present, or in the first element if a sign is present.
-     * @throws NumberFormatException If the input string is not a valid decimal representation of a {@code HugeInteger} number.
      */ 
     public HugeInteger(String digitsBigEndian) 
     {
@@ -116,9 +115,8 @@ public class HugeInteger
      * @param int[] The input array. It's assumed to be in big-endian order: the most significant digit is in the zeroth element.
      * @param int The value of the signum function of the {@code HugeInteger} where {@code -1} represents a 
      *            negative number, {@code 1} a positive number and {@code 0} the number zero.
-     * @throws NumberFormatException If the input array is not a valid representation of a {@code HugeInteger} number, if the provided
-     *                               signum value if less than -1 or greater than 1 or if there is a mismatch between the signum value
-     *                               and the input array.
+     * @throws NumberFormatException If the providedsignum value if less than -1 or greater than 1 or if there is a mismatch
+     *                               between the signum value and the input array.              
      */
     public HugeInteger(int[] digitsBigEndian, int signum) 
     {
@@ -170,6 +168,7 @@ public class HugeInteger
      * 
      * @param int[] The input array. Is assumed to be in big-endian order: the most significant digit is in the zeroth element.
      * @return An {@code ArgumentValidator} object containing the results of the validation.
+     * @throws NumberFormatException If the input array is not a valid representation of a {@code HugeInteger} number. 
      */ 
     private final void validateArray(int[] digitsBigEndian)
     {
@@ -215,6 +214,7 @@ public class HugeInteger
      * @param String The input string. Is assumed to be in big-endian order: the most significant digit is in
      *               the zeroth element if no sign is present, or in the first element if a sign is present.
      * @return An {@code ArgumentValidator} object containing the results of the validation.
+     * @throws NumberFormatException If the input string is not a valid decimal representation of a {@code HugeInteger} number.
      */ 
     private final void validateString(String digitsBigEndian)
     {        
@@ -578,6 +578,67 @@ public class HugeInteger
         }
         
         return stripTrailingZerosArray(result);
+    }
+    
+    /**
+     * This private method does the integer division of the absolute values of the {@code HugeIntegers}
+     * represented by the two input digits arrays.
+     * 
+     * @param int[] The array representing the absolute value of the first {@code HugeInteger}. Is assumed to be
+     *              in little-endian order: the least significant digit is in the zeroth element.
+     * @param int[] The array representing the absolute value of the second {@code HugeInteger}. Is assumed to be
+     *              in little-endian order: the least significant digit is in the zeroth element.
+     * @return An array in little-endian order which is the result of the integer division of the two input arrays.
+     */
+    private int[] intDivide(int[] dividend, int[] divisor) 
+    {
+        int index = dividend.length - divisor.length;
+        int[] parcel = Arrays.copyOfRange(dividend, index, dividend.length);
+        int[] remainder;
+        StringBuilder stringBuffer = new StringBuilder(dividend.length);
+        
+        
+        if (compareAbsoluteValues(parcel, divisor) == -1)
+        {
+            parcel = Arrays.copyOfRange(dividend, --index, dividend.length);
+        }
+        
+        while (index >= 0)
+        {
+            index--;
+            int[] buffer = divisor;
+            int[] quotientDigit = new int[] {0};
+            
+            while (compareAbsoluteValues(parcel, buffer) > -1)
+            {
+                buffer = intAdd(buffer, divisor);
+                quotientDigit = intAdd(quotientDigit, ONE.digits);
+            }
+            
+            stringBuffer.append(quotientDigit[0]);
+            remainder = intSubtract(parcel, intMultiply(quotientDigit, divisor), 1);
+            parcel = new int[remainder.length + 1];
+            
+            if (index > -1)
+            {
+                parcel[0] = dividend[index];
+            
+                for (int n = 0; n < remainder.length; n++)
+                {
+                    parcel[n + 1] = remainder[n];
+                }
+            }
+        }
+        
+        String quotientString = stringBuffer.toString();
+        int[] quotient = new int[quotientString.length()];
+        
+        for (int n = 0; n < quotientString.length(); n++)
+        {
+            quotient[quotient.length - 1 - n] = Character.getNumericValue(quotientString.charAt(n));
+        }
+        
+        return quotient;
     }
     
     // Static methods of class HugeInteger.
@@ -982,39 +1043,12 @@ public class HugeInteger
     }
     
     /**
-     * This public method returns the String representation of this {@code HugeInteger}.
-     * A {@code minus} sign is added if the {@code HugeInteger} is negative.
+     * This public method performs the integer division of this {@code HugeInteger} by the input {@code HugeInteger}.
      * 
-     * @return String representation of this {@code HugeInteger}.
+     * @param HugeInteger The {@code HugeInteger} to divide this {@code HugeInteger}.
+     * @return A {@code HugeInteger} which is the result of the integer division.
+     * @throws ArithmeticException Division by zero if the divisor is zero.
      */
-    @Override
-    public String toString() 
-    {
-        String result = "";
-        
-        if (isZero()) 
-        {
-            result = "0";
-        }
-        else
-        {
-            StringBuilder buffer = new StringBuilder(41);
-            if (getSignum() == -1) 
-            {
-                buffer.append("-");
-            }
-            
-            for (int index = digits.length - 1; index >= 0 ; index--) 
-            {
-                buffer.append(digits[index]);
-            }
-            
-            result = buffer.toString();
-        }
-        
-        return result;
-    }
-    
     public HugeInteger divide(HugeInteger divisor) 
     {
         HugeInteger result;
@@ -1048,57 +1082,13 @@ public class HugeInteger
         return result;
     }
     
-    private int[] intDivide(int[] dividend, int[] divisor) 
-    {
-        int index = dividend.length - divisor.length;
-        int[] parcel = Arrays.copyOfRange(dividend, index, dividend.length);
-        int[] remainder;
-        StringBuilder stringBuffer = new StringBuilder(dividend.length);
-        
-        
-        if (compareAbsoluteValues(parcel, divisor) == -1)
-        {
-            parcel = Arrays.copyOfRange(dividend, --index, dividend.length);
-        }
-        
-        while (index >= 0)
-        {
-            index--;
-            int[] buffer = divisor;
-            int[] quotientDigit = new int[] {0};
-            
-            while (compareAbsoluteValues(parcel, buffer) > -1)
-            {
-                buffer = intAdd(buffer, divisor);
-                quotientDigit = intAdd(quotientDigit, ONE.digits);
-            }
-            
-            stringBuffer.append(quotientDigit[0]);
-            remainder = intSubtract(parcel, intMultiply(quotientDigit, divisor), 1);
-            parcel = new int[remainder.length + 1];
-            
-            if (index > -1)
-            {
-                parcel[0] = dividend[index];
-            
-                for (int n = 0; n < remainder.length; n++)
-                {
-                    parcel[n + 1] = remainder[n];
-                }
-            }
-        }
-        
-        String quotientString = stringBuffer.toString();
-        int[] quotient = new int[quotientString.length()];
-        
-        for (int n = 0; n < quotientString.length(); n++)
-        {
-            quotient[quotient.length - 1 - n] = Character.getNumericValue(quotientString.charAt(n));
-        }
-        
-        return quotient;
-    }
-    
+    /**
+     * This public method returns the remainder of the division of this {@code HugeInteger} by the input {@code HugeInteger}.
+     * 
+     * @param HugeInteger The {@code HugeInteger} to divide this {@code HugeInteger}.
+     * @return A {@code HugeInteger} which is the remainder of the division.
+     * @throws ArithmeticException Division by zero if the divisor is zero.
+     */
     public HugeInteger remainder(HugeInteger divisor) 
     {
         HugeInteger result;
@@ -1136,5 +1126,45 @@ public class HugeInteger
         
         return result;
     }
+    
+    /**
+     * This public method returns the String representation of this {@code HugeInteger}.
+     * A {@code minus} sign is added if the {@code HugeInteger} is negative.
+     * 
+     * @return String representation of this {@code HugeInteger}.
+     */
+    @Override
+    public String toString() 
+    {
+        String result = "";
+        
+        if (isZero()) 
+        {
+            result = "0";
+        }
+        else
+        {
+            StringBuilder buffer = new StringBuilder(41);
+            if (getSignum() == -1) 
+            {
+                buffer.append("-");
+            }
+            
+            for (int index = digits.length - 1; index >= 0 ; index--) 
+            {
+                buffer.append(digits[index]);
+            }
+            
+            result = buffer.toString();
+        }
+        
+        return result;
+    }
+    
+    
+    
+    
+    
+    
     
 }
