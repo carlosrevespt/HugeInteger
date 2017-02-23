@@ -239,7 +239,6 @@ public class HugeInteger
         else
         {
             int numberOfNonDigits = digitsBigEndian.replaceAll("[0-9]", "").length();
-            //int numberOfDigits = digitsBigEndian.length() - numberOfNonDigits;
             
             if (numberOfNonDigits > 1)
             {
@@ -415,11 +414,8 @@ public class HugeInteger
             }
                 
             int sum = firstDigit + secondDigit + carry;
-            //System.out.println("sum =" + sum);
-            carry = sum > 9 ? 1 : 0;
-            //System.out.println("carry =" + carry);    
+            carry = sum > 9 ? 1 : 0; 
             result[n] = sum % 10;
-            //System.out.println("result[n] =" + result[n]);
         }
                 
         if (carry == 1) 
